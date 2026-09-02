@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEO-SENTINEL | Sovereign Geospatial Semantic Intelligence & Multi-Temporal Change Platform</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/frontend/styles.css">
+</head>
+<body class="dark-theme">
+    <!-- Top Tactical Navigation Bar -->
+    <header class="tactical-header">
+        <div class="header-left">
+            <div class="brand-logo">
+                <i class="fa-solid fa-satellite-dish logo-icon"></i>
+                <div class="brand-text">
+                    <span class="brand-title">GEO-SENTINEL</span>
+                    <span class="brand-subtitle">EARTH OBSERVATION AI PLATFORM</span>
+                </div>
+            </div>
+            <div class="sovereignty-badge">
+                <span class="status-dot pulsing"></span>
+                <span class="badge-text">AIR-GAPPED SOVEREIGN RUNTIME</span>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="tactical-nav">
+            <button class="nav-tab active" data-tab="search-view">
+                <i class="fa-solid fa-magnifying-glass-location"></i> Semantic Retrieval
+            </button>
+            <button class="nav-tab" data-tab="swipe-view">
+                <i class="fa-solid fa-code-compare"></i> Change & Swipe Inspector
+            </button>
+            <button class="nav-tab" data-tab="discovery-view">
+                <i class="fa-solid fa-circle-nodes"></i> Site Discovery & Clusters
+            </button>
+            <button class="nav-tab" data-tab="queue-view">
+                <i class="fa-solid fa-list-check"></i> Review Queue <span class="queue-counter" id="badge-queue-count">0</span>
+            </button>
+            <button class="nav-tab" data-tab="system-view">
+                <i class="fa-solid fa-server"></i> Ingestion & Telemetry
+            </button>
+        </nav>
+
+        <div class="header-right">
+            <button class="btn btn-outline" id="btn-export-report">
+                <i class="fa-solid fa-file-shield"></i> Export Report
+            </button>
+            <div class="analyst-pill">
+                <i class="fa-solid fa-user-astronaut"></i>
+                <span id="header-analyst-id">Analyst_Alpha</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+        
+        <!-- VIEW 1: SEMANTIC & MULTIMODAL RETRIEVAL -->
+        <section id="search-view" class="view-panel active">
+            <div class="view-grid">
+                <!-- Left Control Sidebar -->
+                <aside class="sidebar-panel">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-brain"></i> Multimodal Query Engine</h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- Natural Language Search Input -->
+                            <div class="form-group">
+                                <label for="semantic-query-input">Natural Language Semantic Query</label>
+                                <div class="search-input-wrapper">
+                                    <input type="text" id="semantic-query-input" placeholder="e.g. newly built structures near a river..." value="newly built structures near a river">
+                                    <button class="btn-icon" id="btn-execute-search" title="Execute Semantic Search">
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Query Presets -->
+                            <div class="form-group">
+                                <label>Example Tactical Queries</label>
+                                <select id="query-presets" class="form-select">
+                                    <option value="" disabled selected>-- Select Tactical Preset --</option>
+                                    <option value="newly built structures near a river">Newly built structures near a river</option>
+                                    <option value="large vehicle concentrations on open ground">Large vehicle concentrations on open ground</option>
+                                    <option value="deforestation and clear-cut timber logging">Deforestation and clear-cut timber logging</option>
+                                    <option value="flood water inundation and river expansion">Flood water inundation and river expansion</option>
+                                    <option value="airport runway expansion and transport logistics">Airport runway expansion and transport logistics</option>
+                                    <option value="industrial storage warehouses with paved roads">Industrial storage warehouses with paved roads</option>
+                                </select>
+                            </div>
+
+                            <!-- Image-to-Image Visual Search Upload -->
+                            <div class="form-group">
+                                <label>Image-to-Image Visual Exemplar</label>
+                                <div class="dropzone" id="visual-search-dropzone">
+                                    <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+                                    <p>Drop exemplar tile or click to upload</p>
+                                    <input type="file" id="visual-file-input" accept="image/*" style="display:none;">
+                                </div>
+                                <div id="exemplar-preview-container" class="preview-hidden">
+                                    <img id="exemplar-preview-img" src="" alt="Exemplar">
+                                    <button class="btn-link" id="btn-clear-exemplar"><i class="fa-solid fa-xmark"></i> Clear Exemplar</button>
+                                </div>
+                            </div>
+
+                            <!-- Filters Accordion -->
+                            <div class="filter-section">
+                                <h4><i class="fa-solid fa-sliders"></i> Geospatial & Sensor Filters</h4>
+                                
+                                <div class="form-group-row">
+                                    <div>
+                                        <label for="date-start">Date From</label>
+                                        <input type="date" id="date-start" class="form-control" value="2025-01-01">
+                                    </div>
+                                    <div>
+                                        <label for="date-end">Date To</label>
+                                        <input type="date" id="date-end" class="form-control" value="2025-12-31">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="sensor-filter">Sensor Platform</label>
+                                    <select id="sensor-filter" class="form-select">
+                                        <option value="">All Sensors (Sentinel-2, Landsat, WorldView)</option>
+                                        <option value="Sentinel-2">Sentinel-2 MSI (10m Multi-spectral)</option>
+                                        <option value="Landsat">Landsat-8/9 OLI</option>
+                                        <option value="WorldView">WorldView-3 (High-Res Optical)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="min-quality-slider">Min Quality Score: <span id="quality-val-display">70%</span></label>
+                                    <input type="range" id="min-quality-slider" min="0" max="100" value="70" class="range-slider">
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-block" id="btn-run-search-main">
+                                <i class="fa-solid fa-bolt"></i> Execute Hybrid Search
+                            </button>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Center Map View -->
+                <div class="map-container-panel">
+                    <div class="map-header-bar">
+                        <div class="map-coords-info">
+                            <span id="map-cursor-coords">Lat: 28.6139 | Lon: 77.2090 | Zoom: 14</span>
+                        </div>
+                        <div class="map-layer-controls">
+                            <label><input type="checkbox" id="layer-toggle-tiles" checked> Satellite Tiles</label>
+                            <label><input type="checkbox" id="layer-toggle-changes" checked> Change Contours</label>
+                            <label><input type="checkbox" id="layer-toggle-clusters" checked> Clusters</label>
+                        </div>
+                    </div>
+                    <div id="tactical-map" class="map-canvas"></div>
+                </div>
+
+                <!-- Right Results Grid Panel -->
+                <aside class="results-panel">
+                    <div class="panel-card">
+                        <div class="card-header flex-between">
+                            <h3><i class="fa-solid fa-list-ol"></i> Rank-Ordered Results</h3>
+                            <span class="badge" id="results-count-badge">0 matches</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="telemetry-bar">
+                                <span><i class="fa-solid fa-stopwatch"></i> Vector Latency: <strong id="search-latency-display">0.00 ms</strong></span>
+                                <span><i class="fa-solid fa-shield"></i> Air-gapped FAISS</span>
+                            </div>
+                            <div class="results-grid-container" id="search-results-list">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-satellite empty-icon"></i>
+                                    <p>Enter a query or select a preset to search the satellite archive.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <!-- VIEW 2: MULTI-TEMPORAL CHANGE & SWIPE INSPECTOR -->
+        <section id="swipe-view" class="view-panel">
+            <div class="swipe-dashboard-grid">
+                <!-- Left Controls -->
+                <div class="swipe-controls-sidebar">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-timeline"></i> Change Analysis Configuration</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="scenario-selector">Scenario / AOI Target</label>
+                                <select id="scenario-selector" class="form-select">
+                                    <option value="scene_urban_river" selected>Riverfront Urban Construction (Delhi Sector)</option>
+                                    <option value="scene_forest_clearance">Forest Clearance & Deforestation (Bravo Sector)</option>
+                                    <option value="scene_water_inundation">Reservoir Inundation & Flood (Charlie Sector)</option>
+                                    <option value="scene_airfield_transport">Airfield Logistics Expansion (Delta Sector)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group-row">
+                                <div>
+                                    <label for="select-t1-date">Baseline Date (T1)</label>
+                                    <select id="select-t1-date" class="form-select"></select>
+                                </div>
+                                <div>
+                                    <label for="select-t2-date">Target Date (T2)</label>
+                                    <select id="select-t2-date" class="form-select"></select>
+                                </div>
+                            </div>
+
+                            <!-- Layer Visualization Mode -->
+                            <div class="form-group">
+                                <label>Comparison Visual Mode</label>
+                                <div class="btn-group-toggle" id="visual-mode-toggle">
+                                    <button class="btn-toggle active" data-mode="swipe"><i class="fa-solid fa-arrows-left-right"></i> Curtain Swipe</button>
+                                    <button class="btn-toggle" data-mode="diff"><i class="fa-solid fa-fire"></i> Heatmap Diff</button>
+                                    <button class="btn-toggle" data-mode="nir"><i class="fa-solid fa-leaf"></i> False Color NIR</button>
+                                    <button class="btn-toggle" data-mode="qa"><i class="fa-solid fa-cloud"></i> QA Cloud Mask</button>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary btn-block" id="btn-execute-change-analysis">
+                                <i class="fa-solid fa-microchip"></i> Run Multi-Temporal Analysis
+                            </button>
+
+                            <!-- Change Diagnosis Card -->
+                            <div class="change-diagnosis-box" id="change-diagnosis-container">
+                                <h4><i class="fa-solid fa-triangle-exclamation"></i> Change Intelligence</h4>
+                                <div class="diag-row">
+                                    <span>Classification:</span>
+                                    <strong id="diag-change-type" class="highlight-text">Construction / Built-up</strong>
+                                </div>
+                                <div class="diag-row">
+                                    <span>Severity:</span>
+                                    <span id="diag-severity" class="severity-badge badge-high">High</span>
+                                </div>
+                                <div class="diag-row">
+                                    <span>Confidence Score:</span>
+                                    <strong id="diag-confidence">94.2%</strong>
+                                </div>
+                                <div class="diag-row">
+                                    <span>Earliest Observation (T*):</span>
+                                    <strong id="diag-earliest-date" class="accent-text">2025-04-15</strong>
+                                </div>
+                                <div class="diag-row">
+                                    <span>Quality Factor:</span>
+                                    <span id="diag-quality-factor">0.98 (Cloud-Free)</span>
+                                </div>
+                            </div>
+
+                            <!-- Triage Action Box -->
+                            <div class="triage-action-box">
+                                <h4><i class="fa-solid fa-gavel"></i> Analyst Triage & Audit Decision</h4>
+                                <textarea id="analyst-notes-input" placeholder="Enter operational notes or justification..." rows="2" class="form-control"></textarea>
+                                <div class="triage-btn-group">
+                                    <button class="btn btn-success" id="btn-triage-confirm"><i class="fa-solid fa-check"></i> Confirm Change</button>
+                                    <button class="btn btn-danger" id="btn-triage-reject"><i class="fa-solid fa-xmark"></i> Reject False Alarm</button>
+                                    <button class="btn btn-warning" id="btn-triage-flag"><i class="fa-solid fa-flag"></i> Flag Follow-up</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Split Swipe Canvas -->
+                <div class="swipe-viewport-panel">
+                    <div class="swipe-canvas-container" id="swipe-container">
+                        <!-- Before Image Layer -->
+                        <div class="image-layer layer-before">
+                            <img id="img-before" src="" alt="Before Acquisition (T1)">
+                            <div class="layer-label label-top-left">
+                                <span class="badge badge-info">BEFORE: <strong id="lbl-t1-date">T1</strong></span>
+                            </div>
+                        </div>
+                        <!-- After Image Layer (Clipped by slider) -->
+                        <div class="image-layer layer-after" id="layer-after-clipped">
+                            <img id="img-after" src="" alt="After Acquisition (T2)">
+                            <div class="layer-label label-top-right">
+                                <span class="badge badge-warning">AFTER: <strong id="lbl-t2-date">T2</strong></span>
+                            </div>
+                        </div>
+                        <!-- Heatmap Overlay Layer -->
+                        <div class="image-layer layer-overlay-heatmap" id="layer-overlay-heatmap" style="display:none;">
+                            <img id="img-heatmap-overlay" src="" alt="Difference Heatmap">
+                        </div>
+                        <!-- Draggable Swipe Divider Bar -->
+                        <div class="swipe-divider" id="swipe-divider">
+                            <div class="swipe-handle"><i class="fa-solid fa-arrows-left-right"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Temporal Time-Series Playback Bar -->
+                    <div class="temporal-timeline-bar">
+                        <div class="timeline-controls">
+                            <button class="btn-icon" id="btn-play-timeline" title="Play Time-Series Animation"><i class="fa-solid fa-play"></i></button>
+                            <button class="btn-icon" id="btn-reset-timeline" title="Reset Timeline"><i class="fa-solid fa-rotate-left"></i></button>
+                            <span class="timeline-step-indicator" id="timeline-step-label">Observation 1 of 4</span>
+                        </div>
+                        <div class="timeline-scrubber-wrapper">
+                            <input type="range" id="timeline-scrubber" min="0" max="3" value="0" class="timeline-slider">
+                            <div class="timeline-markers" id="timeline-markers-container">
+                                <!-- Dynamic date markers with onset highlight -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Onset Trajectory Graph Canvas -->
+                    <div class="onset-graph-card">
+                        <div class="card-header flex-between">
+                            <h4><i class="fa-solid fa-chart-line"></i> Earliest Usable Observation Statistical Trajectory (T*)</h4>
+                            <span class="badge badge-outline" id="trajectory-status-badge">Onset Confirmed</span>
+                        </div>
+                        <div class="onset-canvas-box">
+                            <canvas id="onset-chart" height="120"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: DISCOVERY & EMBEDDING CLUSTERING -->
+        <section id="discovery-view" class="view-panel">
+            <div class="discovery-grid">
+                <!-- Left 2D UMAP Semantic Scatter -->
+                <div class="cluster-canvas-card">
+                    <div class="card-header flex-between">
+                        <h3><i class="fa-solid fa-chart-pie"></i> 2D Latent Semantic Embedding Space (UMAP/PCA)</h3>
+                        <div class="cluster-legend-pills" id="cluster-legend-list">
+                            <!-- Dynamic cluster badges -->
+                        </div>
+                    </div>
+                    <div class="card-body relative-box">
+                        <canvas id="cluster-scatter-canvas" class="scatter-canvas"></canvas>
+                        <div id="scatter-tooltip" class="scatter-tooltip" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <!-- Right Cluster Drilldown & Find Similar -->
+                <div class="cluster-drilldown-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-compass"></i> Site Discovery & Exemplar Inspector</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <p class="helper-text">Click any point in the 2D embedding space or select an exemplar below to discover all identical facilities/patterns across the AOI without manual queries.</p>
+                        </div>
+                        <div class="exemplars-grid" id="cluster-exemplars-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <div class="similar-sites-container">
+                            <h4><i class="fa-solid fa-clone"></i> Matched Counterpart Sites Across Region</h4>
+                            <div class="similar-sites-grid" id="similar-sites-results">
+                                <div class="empty-state">
+                                    <p>Select a site to inspect comparable geospatial patterns.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 4: RANKED REVIEW QUEUE -->
+        <section id="queue-view" class="view-panel">
+            <div class="queue-panel-container">
+                <div class="card-header flex-between">
+                    <div>
+                        <h2><i class="fa-solid fa-list-check"></i> Prioritized Intelligence Review Queue</h2>
+                        <p class="subtitle">Ranked by change severity, confidence score, and statistical onset verification.</p>
+                    </div>
+                    <div class="queue-filter-controls">
+                        <select id="queue-filter-status" class="form-select">
+                            <option value="">All Triage Statuses</option>
+                            <option value="unreviewed" selected>Unreviewed (Pending)</option>
+                            <option value="confirmed">Confirmed Valid</option>
+                            <option value="rejected">Rejected False Alarms</option>
+                            <option value="flagged">Flagged for Follow-up</option>
+                        </select>
+                        <select id="queue-filter-severity" class="form-select">
+                            <option value="">All Severities</option>
+                            <option value="High">High Severity</option>
+                            <option value="Medium">Medium Severity</option>
+                            <option value="Low">Low Severity</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="active-learning-banner">
+                        <div class="al-text">
+                            <i class="fa-solid fa-brain"></i>
+                            <span>Active Learning Feedback Loop: Weights dynamically update as analyst confirms or rejects candidate alerts.</span>
+                        </div>
+                        <div class="al-weights" id="live-active-learning-weights">
+                            <span>Semantic: <strong>70%</strong></span>
+                            <span>Quality QA: <strong>15%</strong></span>
+                            <span>Spatial: <strong>15%</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="tactical-table">
+                            <thead>
+                                <tr>
+                                    <th>Change ID</th>
+                                    <th>Preview / Diff</th>
+                                    <th>Change Classification</th>
+                                    <th>Severity</th>
+                                    <th>Confidence</th>
+                                    <th>Onset Date (T*)</th>
+                                    <th>Coordinates</th>
+                                    <th>Triage Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="queue-table-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 5: INGESTION & SYSTEM TELEMETRY -->
+        <section id="system-view" class="view-panel">
+            <div class="system-dashboard-grid">
+                <!-- Telemetry Metrics Cards -->
+                <div class="telemetry-cards-row">
+                    <div class="metric-card">
+                        <i class="fa-solid fa-images metric-icon"></i>
+                        <div class="metric-data">
+                            <span class="metric-val" id="metric-scenes-count">16</span>
+                            <span class="metric-lbl">Indexed GeoTIFF Scenes</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fa-solid fa-vector-square metric-icon"></i>
+                        <div class="metric-data">
+                            <span class="metric-val" id="metric-tiles-count">64</span>
+                            <span class="metric-lbl">Georeferenced Vector Tiles</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fa-solid fa-gauge-high metric-icon"></i>
+                        <div class="metric-data">
+                            <span class="metric-val" id="metric-vector-latency">0.42 ms</span>
+                            <span class="metric-lbl">Vector Query Latency</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fa-solid fa-hard-drive metric-icon"></i>
+                        <div class="metric-data">
+                            <span class="metric-val" id="metric-storage-footprint">18.4 MB</span>
+                            <span class="metric-lbl">Archive Storage Footprint</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Incremental Ingestion Card -->
+                <div class="ingestion-upload-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-file-import"></i> Incremental GeoTIFF / COG Ingestion Engine</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="helper-text">Fulfills Capability 2.2.6: Ingests new satellite passes incrementally without stopping the service or rebuilding the FAISS index.</p>
+                        
+                        <form id="incremental-ingest-form" class="ingest-form">
+                            <div class="form-group-row">
+                                <div>
+                                    <label for="ingest-scene-id">Scene Identifier</label>
+                                    <input type="text" id="ingest-scene-id" class="form-control" placeholder="e.g. scene_coastal_surveillance_1" required>
+                                </div>
+                                <div>
+                                    <label for="ingest-acq-date">Acquisition Date</label>
+                                    <input type="date" id="ingest-acq-date" class="form-control" value="2025-12-01" required>
+                                </div>
+                                <div>
+                                    <label for="ingest-sensor">Sensor Platform</label>
+                                    <select id="ingest-sensor" class="form-select">
+                                        <option value="Sentinel-2 MSI">Sentinel-2 MSI</option>
+                                        <option value="Landsat-9 OLI">Landsat-9 OLI</option>
+                                        <option value="WorldView-3">WorldView-3 Optical</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Upload GeoTIFF / Cloud Optimized GeoTIFF (.tif / .tiff)</label>
+                                <div class="dropzone" id="ingest-dropzone">
+                                    <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+                                    <p id="ingest-filename-display">Select GeoTIFF raster file or drag and drop here</p>
+                                    <input type="file" id="ingest-file-input" accept=".tif,.tiff" style="display:none;" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" id="btn-submit-ingest">
+                                <i class="fa-solid fa-arrow-up-from-bracket"></i> Ingest & Index Incrementally
+                            </button>
+                        </form>
+
+                        <div id="ingest-progress-container" class="ingest-progress-box" style="display:none;">
+                            <div class="progress-bar-wrapper">
+                                <div class="progress-bar-fill" id="ingest-progress-fill"></div>
+                            </div>
+                            <p id="ingest-status-text">Parsing GeoTIFF affine transform and extracting 512-dim embeddings...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Provenance & STAC Inspector -->
+                <div class="provenance-viewer-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-fingerprint"></i> STAC Item Metadata & Geospatial Provenance Viewer</h3>
+                    </div>
+                    <div class="card-body">
+                        <pre id="stac-json-preview" class="code-box">Select an entity to view cryptographic SHA-256 lineage and STAC item metadata.</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Export Intelligence Report Modal -->
+    <div class="modal-backdrop" id="export-report-modal" style="display:none;">
+        <div class="modal-window">
+            <div class="modal-header flex-between">
+                <h3><i class="fa-solid fa-file-shield"></i> Geospatial Intelligence Assessment Report</h3>
+                <button class="btn-icon" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-report-content" class="markdown-rendered-view"></div>
+            </div>
+            <div class="modal-footer flex-between">
+                <span class="provenance-tag"><i class="fa-solid fa-lock"></i> 100% On-Premises Cryptographic Attestation</span>
+                <button class="btn btn-primary" id="btn-download-pdf-report"><i class="fa-solid fa-download"></i> Download Report (PDF/Markdown)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/frontend/components/map_view.js"></script>
+    <script src="/frontend/components/swipe_inspector.js"></script>
+    <script src="/frontend/components/search_panel.js"></script>
+    <script src="/frontend/components/cluster_explorer.js"></script>
+    <script src="/frontend/components/review_queue.js"></script>
+    <script src="/frontend/components/system_monitor.js"></script>
+    <script src="/frontend/app.js"></script>
+</body>
+</html>

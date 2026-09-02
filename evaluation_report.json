@@ -1,0 +1,36 @@
+{
+  "benchmark_timestamp": "2026-09-02 05:38:51 UTC",
+  "system_status": "All 6 Capabilities Verified & Operational",
+  "hardware_telemetry": {
+    "hardware_platform": "NVIDIA GeForce GTX 1650",
+    "cuda_acceleration": true,
+    "pytorch_version": "2.7.1+cu118",
+    "system_ram_gb": 15.79,
+    "logical_cpu_cores": 8,
+    "execution_mode": "100% On-Premises Air-Gapped Sovereign Runtime"
+  },
+  "archive_metrics": {
+    "total_indexed_scenes": 17,
+    "total_indexed_tiles": 68,
+    "total_change_candidates": 25,
+    "archive_storage_footprint_mb": 30.23,
+    "vector_index_size": 68
+  },
+  "semantic_retrieval_performance": {
+    "mean_reciprocal_rank_mrr": 1.0,
+    "precision_at_5": 1.0,
+    "query_latency_p50_ms": 5.08,
+    "query_latency_p95_ms": 9.32
+  },
+  "change_intelligence_performance": {
+    "change_detection_precision": 1.0,
+    "change_detection_recall": 0.8,
+    "f1_score": 0.8889,
+    "false_alarm_rate_far": 0.0,
+    "quality_suppression_verified": true
+  },
+  "incremental_ingestion_performance": {
+    "throughput_tiles_per_second": 7.5,
+    "index_rebuild_required": false
+  }
+}
