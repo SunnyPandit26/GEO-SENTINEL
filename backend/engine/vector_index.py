@@ -127,7 +127,7 @@ class VectorIndexEngine:
             if quality_score < min_quality:
                 continue
 
-            # 4. Spatial Overlap Score
+            # 4. Spatial Overlap Filter
             spatial_score = 1.0
             if aoi_bbox:
                 # Check if tile center falls in AOI bbox [min_lat, min_lon, max_lat, max_lon]
@@ -135,7 +135,8 @@ class VectorIndexEngine:
                 t_lon = meta.get("center_lon", 0.0)
                 in_lat = aoi_bbox.get("min_lat", -90) <= t_lat <= aoi_bbox.get("max_lat", 90)
                 in_lon = aoi_bbox.get("min_lon", -180) <= t_lon <= aoi_bbox.get("max_lon", 180)
-                spatial_score = 1.0 if (in_lat and in_lon) else 0.2
+                if not (in_lat and in_lon):
+                    continue  # Strict spatial filtering for requested geographic region
 
             # Hybrid Score Calculation
             raw_cosine = float(sim)

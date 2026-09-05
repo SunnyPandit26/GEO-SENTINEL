@@ -4,12 +4,29 @@
  * cluster exemplars, and executes one-click discovery across the regional AOI.
  */
 
+window.allClusterTiles = {};
+
+window.locateClusterTile = function(tileId) {
+    console.log('[locateClusterTile] locating tile:', tileId);
+    let tile = window.allClusterTiles ? window.allClusterTiles[tileId] : null;
+    if (!tile && window.app && window.app.clusterExplorer) {
+        tile = window.app.clusterExplorer.points.find(x => x.tile_id === tileId);
+    }
+    if (!tile) {
+        tile = { tile_id: tileId, center_lat: 28.6139, center_lon: 77.2090 };
+    }
+    if (window.app && window.app.navigateToMapAndHighlight) {
+        window.app.navigateToMapAndHighlight(tile);
+    }
+};
+
 class ClusterExplorer {
     constructor() {
         this.canvas = null;
         this.ctx = null;
         this.clusters = [];
         this.points = [];
+        this.tilesById = {};
         this.selectedClusterId = null;
         this.selectedTileId = null;
         this.hoveredPoint = null;
@@ -94,6 +111,12 @@ class ClusterExplorer {
             const data = await res.json();
             this.clusters = data.clusters || [];
             this.points = data.points || [];
+
+            this.tilesById = {};
+            this.points.forEach(p => {
+                this.tilesById[p.tile_id] = p;
+                window.allClusterTiles[p.tile_id] = p;
+            });
 
             this.renderLegend();
             this.renderExemplars();
@@ -241,6 +264,7 @@ class ClusterExplorer {
 
             const card = document.createElement('div');
             card.className = `cluster-tile-box ${isSelected ? 'active' : ''}`;
+            card.setAttribute('onclick', `window.locateClusterTile('${p.tile_id}')`);
             card.innerHTML = `
                 <div class="tile-box-thumb-wrap">
                     <img src="${p.preview_path || p.rgb_preview_path}" alt="Tile Preview" class="tile-box-img" loading="lazy" />
@@ -259,48 +283,15 @@ class ClusterExplorer {
                         <span>Lat: ${(p.center_lat || 28.6139).toFixed(4)} | Lon: ${(p.center_lon || 77.2090).toFixed(4)}</span>
                     </div>
                     <div class="tile-btn-actions">
-                        <button class="btn btn-primary btn-sm btn-tile-locate" title="Switch to Map & Highlight Footprint">
+                        <button class="btn btn-primary btn-sm btn-tile-locate" onclick="event.stopPropagation(); window.locateClusterTile('${p.tile_id}')" title="Switch to Map & Highlight Footprint">
                             <i class="fa-solid fa-location-crosshairs"></i> Locate on Map
                         </button>
-                        <button class="btn btn-outline btn-sm btn-tile-swipe" title="Inspect in Swipe Inspector">
+                        <button class="btn btn-outline btn-sm btn-tile-swipe" onclick="event.stopPropagation(); window.app.inspectTile('${p.tile_id}')" title="Inspect in Swipe Inspector">
                             <i class="fa-solid fa-code-compare"></i>
                         </button>
                     </div>
                 </div>
             `;
-
-            // Clicking card or Locate on Map navigates to Tab 1 (Semantic Retrieval / Map View)
-            card.addEventListener('click', () => {
-                this.selectedTileId = p.tile_id;
-                document.querySelectorAll('.cluster-tile-box').forEach(b => b.classList.remove('active'));
-                card.classList.add('active');
-                if (window.app && window.app.navigateToMapAndHighlight) {
-                    window.app.navigateToMapAndHighlight(p);
-                }
-            });
-
-            // Locate button click
-            const btnLocate = card.querySelector('.btn-tile-locate');
-            if (btnLocate) {
-                btnLocate.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.selectedTileId = p.tile_id;
-                    if (window.app && window.app.navigateToMapAndHighlight) {
-                        window.app.navigateToMapAndHighlight(p);
-                    }
-                });
-            }
-
-            // Swipe button click
-            const btnSwipe = card.querySelector('.btn-tile-swipe');
-            if (btnSwipe) {
-                btnSwipe.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (window.app && window.app.inspectTile) {
-                        window.app.inspectTile(p.tile_id);
-                    }
-                });
-            }
 
             gallery.appendChild(card);
         });
@@ -510,8 +501,13 @@ class ClusterExplorer {
 
         container.innerHTML = '';
         sites.forEach(s => {
+            if (s.tile_id) {
+                window.allClusterTiles[s.tile_id] = s;
+            }
+
             const card = document.createElement('div');
             card.className = 'similar-tile-card';
+            card.setAttribute('onclick', `window.locateClusterTile('${s.tile_id}')`);
             card.innerHTML = `
                 <div style="position:relative; width:100%; height:75px; overflow:hidden; border-radius:4px;">
                     <img src="${s.rgb_preview_path}" alt="Similar Site" style="width:100%; height:100%; object-fit:cover;" />
@@ -523,41 +519,14 @@ class ClusterExplorer {
                     ${s.tile_id}
                 </div>
                 <div style="display:flex; gap:4px; margin-top:6px;">
-                    <button class="btn btn-primary btn-sm btn-locate-similar" style="flex:1; font-size:9px; padding:3px 4px;">
+                    <button class="btn btn-primary btn-sm btn-locate-similar" onclick="event.stopPropagation(); window.locateClusterTile('${s.tile_id}')" style="flex:1; font-size:9px; padding:3px 4px;">
                         <i class="fa-solid fa-location-crosshairs"></i> Map
                     </button>
-                    <button class="btn btn-outline btn-sm btn-swipe-similar" style="font-size:9px; padding:3px 6px;">
+                    <button class="btn btn-outline btn-sm btn-swipe-similar" onclick="event.stopPropagation(); window.app.inspectTile('${s.tile_id}')" style="font-size:9px; padding:3px 6px;">
                         <i class="fa-solid fa-code-compare"></i>
                     </button>
                 </div>
             `;
-
-            // Card / Map Locate click
-            card.addEventListener('click', () => {
-                if (window.app && window.app.navigateToMapAndHighlight) {
-                    window.app.navigateToMapAndHighlight(s);
-                }
-            });
-
-            const btnLocate = card.querySelector('.btn-locate-similar');
-            if (btnLocate) {
-                btnLocate.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (window.app && window.app.navigateToMapAndHighlight) {
-                        window.app.navigateToMapAndHighlight(s);
-                    }
-                });
-            }
-
-            const btnSwipe = card.querySelector('.btn-swipe-similar');
-            if (btnSwipe) {
-                btnSwipe.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (window.app && window.app.inspectTile) {
-                        window.app.inspectTile(s.tile_id);
-                    }
-                });
-            }
 
             container.appendChild(card);
         });

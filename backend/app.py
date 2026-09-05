@@ -140,15 +140,34 @@ def list_tiles(scene_id: Optional[str] = None, limit: int = 100):
     return {"tiles": tiles, "total": len(tiles)}
 
 
+def extract_location_bbox(query_str: str) -> Optional[Dict[str, float]]:
+    q = query_str.lower()
+    if any(k in q for k in ["delhi", "ncr", "yamuna", "riverfront", "noida", "gurgaon"]):
+        return {"min_lat": 28.50, "min_lon": 77.10, "max_lat": 28.75, "max_lon": 77.35}
+    elif any(k in q for k in ["amazon", "brazil", "sector bravo", "forest bravo"]):
+        return {"min_lat": -3.60, "min_lon": -62.30, "max_lat": -3.30, "max_lon": -62.10}
+    elif any(k in q for k in ["varanasi", "ganga", "river charlie", "sector charlie"]):
+        return {"min_lat": 25.20, "min_lon": 82.80, "max_lat": 25.45, "max_lon": 83.10}
+    elif any(k in q for k in ["bangalore", "bengaluru", "karnataka", "sector delta"]):
+        return {"min_lat": 12.85, "min_lon": 77.45, "max_lat": 13.10, "max_lon": 77.70}
+    elif any(k in q for k in ["punjab", "haryana", "chandigarh", "ludhiana", "amritsar"]):
+        # Dedicated Punjab region (returns 0 if no pass ingested yet)
+        return {"min_lat": 30.00, "min_lon": 74.00, "max_lat": 32.50, "max_lon": 77.00}
+    return None
+
+
 # 2.2.1: Semantic and Multimodal Retrieval
 @app.post("/api/search/semantic")
 def semantic_search(req: SemanticSearchRequest):
     """
-    Free-text natural language search over satellite tiles with hybrid ranking.
+    Free-text natural language search over satellite tiles with hybrid spatial-semantic ranking.
     """
     t0 = time.time()
     query_vector = embedding_engine.embed_text(req.query)
     
+    # Auto-extract geographic location bounding box if present in query text
+    aoi_bbox = req.aoi_bbox or extract_location_bbox(req.query)
+
     date_range = None
     if req.date_start or req.date_end:
         date_range = (req.date_start or "1970-01-01", req.date_end or "2099-12-31")
@@ -156,7 +175,7 @@ def semantic_search(req: SemanticSearchRequest):
     results = vector_index.search(
         query_vector=query_vector,
         top_k=req.top_k,
-        aoi_bbox=req.aoi_bbox,
+        aoi_bbox=aoi_bbox,
         date_range=date_range,
         sensor_filter=req.sensor_filter,
         min_quality=req.min_quality,
@@ -344,18 +363,21 @@ def get_clusters():
     if not tiles_data or vector_index.index.ntotal == 0:
         return {"total_tiles": 0, "clusters": [], "points": []}
 
-    # Extract all stored vectors from vector_index
-    num_vectors = vector_index.index.ntotal
-    all_vectors = np.zeros((num_vectors, vector_index.embedding_dim), dtype=np.float32)
-    for i in range(num_vectors):
-        all_vectors[i] = vector_index.index.reconstruct(i)
-
-    # Align tiles_data with vector order
+    # Extract stored vectors corresponding to indexed tiles safely
     ordered_tiles = []
-    for i in range(num_vectors):
-        meta = vector_index.id_to_meta.get(i, {})
-        ordered_tiles.append(meta)
+    vectors_list = []
+    for vid, meta in vector_index.id_to_meta.items():
+        try:
+            vec = vector_index.index.reconstruct(int(vid))
+            vectors_list.append(vec)
+            ordered_tiles.append(meta)
+        except Exception:
+            continue
 
+    if not vectors_list:
+        return {"total_tiles": 0, "clusters": [], "points": []}
+
+    all_vectors = np.array(vectors_list, dtype=np.float32)
     cluster_result = cluster_engine.cluster_archive(ordered_tiles, all_vectors)
     return cluster_result
 
@@ -366,13 +388,20 @@ def find_similar_sites(req: FindSimilarRequest):
     """
     One-click site discovery: finds similar visual/semantic features across the AOI.
     """
-    num_vectors = vector_index.index.ntotal
-    all_vectors = np.zeros((num_vectors, vector_index.embedding_dim), dtype=np.float32)
     ordered_tiles = []
-    for i in range(num_vectors):
-        all_vectors[i] = vector_index.index.reconstruct(i)
-        ordered_tiles.append(vector_index.id_to_meta.get(i, {}))
+    vectors_list = []
+    for vid, meta in vector_index.id_to_meta.items():
+        try:
+            vec = vector_index.index.reconstruct(int(vid))
+            vectors_list.append(vec)
+            ordered_tiles.append(meta)
+        except Exception:
+            continue
 
+    if not vectors_list:
+        return {"query_tile_id": req.tile_id, "similar_sites": []}
+
+    all_vectors = np.array(vectors_list, dtype=np.float32)
     similar = cluster_engine.find_similar_across_aoi(
         query_tile_id=req.tile_id,
         tiles_data=ordered_tiles,
