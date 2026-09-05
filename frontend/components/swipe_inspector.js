@@ -225,12 +225,23 @@ class SwipeInspector {
         const lblT1 = document.getElementById('lbl-t1-date');
         const lblT2 = document.getElementById('lbl-t2-date');
 
+        const imgSideBefore = document.getElementById('img-side-before');
+        const imgSideAfter = document.getElementById('img-side-after');
+        const lblSideT1 = document.getElementById('lbl-side-t1-date');
+        const lblSideT2 = document.getElementById('lbl-side-t2-date');
+
         if (imgBefore) imgBefore.src = data.tile_t1_preview;
         if (imgAfter) imgAfter.src = data.tile_t2_preview;
         if (imgHeatmap) imgHeatmap.src = data.diff_heatmap_path;
 
+        if (imgSideBefore) imgSideBefore.src = data.tile_t1_preview;
+        if (imgSideAfter) imgSideAfter.src = data.tile_t2_preview;
+
         if (lblT1) lblT1.textContent = `${data.date_t1} (${data.scene_t1_id})`;
         if (lblT2) lblT2.textContent = `${data.date_t2} (${data.scene_t2_id})`;
+
+        if (lblSideT1) lblSideT1.textContent = `${data.date_t1} (T1)`;
+        if (lblSideT2) lblSideT2.textContent = `${data.date_t2} (T2)`;
 
         // Update diagnosis cards
         const diagType = document.getElementById('diag-change-type');
@@ -272,7 +283,7 @@ class SwipeInspector {
 
         const labels = timeline.map(t => t.date);
         const dataMetrics = timeline.map(t => t.change_metric);
-        const pointColors = timeline.map(t => t.date === earliestDate ? '#f59e0b' : (t.is_usable ? '#38bdf8' : '#ef4444'));
+        const pointColors = timeline.map(t => t.date === earliestDate ? '#f59e0b' : (t.is_usable ? '#2563eb' : '#ef4444'));
         const pointRadii = timeline.map(t => t.date === earliestDate ? 8 : (t.is_usable ? 5 : 4));
 
         this.chartInstance = new Chart(ctx, {
@@ -282,8 +293,8 @@ class SwipeInspector {
                 datasets: [{
                     label: 'Change Anomaly Signal Magnitude (3-Sigma)',
                     data: dataMetrics,
-                    borderColor: '#38bdf8',
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     fill: true,
                     tension: 0.3,
                     pointBackgroundColor: pointColors,
@@ -299,12 +310,12 @@ class SwipeInspector {
                 },
                 scales: {
                     x: {
-                        ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } },
-                        grid: { color: 'rgba(255,255,255,0.05)' }
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
                     },
                     y: {
-                        ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } },
-                        grid: { color: 'rgba(255,255,255,0.05)' }
+                        ticks: { color: '#64748b', font: { family: 'JetBrains Mono', size: 10 } },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
                     }
                 }
             }
@@ -313,18 +324,28 @@ class SwipeInspector {
 
     setVisualMode(mode) {
         this.currentVisualMode = mode;
+        const swipeContainer = document.getElementById('swipe-container');
+        const sideContainer = document.getElementById('side-by-side-container');
         const imgHeatmap = document.getElementById('layer-overlay-heatmap');
         const clippedLayer = document.getElementById('layer-after-clipped');
         const divider = document.getElementById('swipe-divider');
 
-        if (mode === "diff") {
-            if (imgHeatmap) imgHeatmap.style.display = 'block';
-            if (clippedLayer) clippedLayer.style.clipPath = 'none';
-            if (divider) divider.style.display = 'none';
+        if (mode === "side-by-side") {
+            if (swipeContainer) swipeContainer.style.display = 'none';
+            if (sideContainer) sideContainer.style.display = 'grid';
         } else {
-            if (imgHeatmap) imgHeatmap.style.display = 'none';
-            if (divider) divider.style.display = 'block';
-            if (clippedLayer) clippedLayer.style.clipPath = 'inset(0 0 0 50%)';
+            if (swipeContainer) swipeContainer.style.display = 'block';
+            if (sideContainer) sideContainer.style.display = 'none';
+
+            if (mode === "diff") {
+                if (imgHeatmap) imgHeatmap.style.display = 'block';
+                if (clippedLayer) clippedLayer.style.clipPath = 'none';
+                if (divider) divider.style.display = 'none';
+            } else {
+                if (imgHeatmap) imgHeatmap.style.display = 'none';
+                if (divider) divider.style.display = 'block';
+                if (clippedLayer) clippedLayer.style.clipPath = 'inset(0 0 0 50%)';
+            }
         }
     }
 

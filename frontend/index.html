@@ -19,7 +19,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/frontend/styles.css">
 </head>
-<body class="dark-theme">
+<body>
     <!-- Top Tactical Navigation Bar -->
     <header class="tactical-header">
         <div class="header-left">
@@ -231,9 +231,9 @@
                                 <label>Comparison Visual Mode</label>
                                 <div class="btn-group-toggle" id="visual-mode-toggle">
                                     <button class="btn-toggle active" data-mode="swipe"><i class="fa-solid fa-arrows-left-right"></i> Curtain Swipe</button>
+                                    <button class="btn-toggle" data-mode="side-by-side"><i class="fa-solid fa-table-columns"></i> Side-by-Side</button>
                                     <button class="btn-toggle" data-mode="diff"><i class="fa-solid fa-fire"></i> Heatmap Diff</button>
                                     <button class="btn-toggle" data-mode="nir"><i class="fa-solid fa-leaf"></i> False Color NIR</button>
-                                    <button class="btn-toggle" data-mode="qa"><i class="fa-solid fa-cloud"></i> QA Cloud Mask</button>
                                 </div>
                             </div>
 
@@ -280,21 +280,22 @@
                     </div>
                 </div>
 
-                <!-- Center Split Swipe Canvas -->
+                <!-- Center Split Swipe Canvas & Side-by-Side Viewer -->
                 <div class="swipe-viewport-panel">
+                    <!-- MODE 1: Curtain Swipe Canvas -->
                     <div class="swipe-canvas-container" id="swipe-container">
                         <!-- Before Image Layer -->
                         <div class="image-layer layer-before">
                             <img id="img-before" src="" alt="Before Acquisition (T1)">
                             <div class="layer-label label-top-left">
-                                <span class="badge badge-info">BEFORE: <strong id="lbl-t1-date">T1</strong></span>
+                                <span class="badge badge-info">📅 BEFORE: <strong id="lbl-t1-date">T1</strong></span>
                             </div>
                         </div>
                         <!-- After Image Layer (Clipped by slider) -->
                         <div class="image-layer layer-after" id="layer-after-clipped">
                             <img id="img-after" src="" alt="After Acquisition (T2)">
                             <div class="layer-label label-top-right">
-                                <span class="badge badge-warning">AFTER: <strong id="lbl-t2-date">T2</strong></span>
+                                <span class="badge badge-warning">📅 AFTER: <strong id="lbl-t2-date">T2</strong></span>
                             </div>
                         </div>
                         <!-- Heatmap Overlay Layer -->
@@ -304,6 +305,30 @@
                         <!-- Draggable Swipe Divider Bar -->
                         <div class="swipe-divider" id="swipe-divider">
                             <div class="swipe-handle"><i class="fa-solid fa-arrows-left-right"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- MODE 2: Side-by-Side Dual Viewer -->
+                    <div class="side-by-side-container" id="side-by-side-container" style="display:none;">
+                        <div class="side-card">
+                            <div class="side-card-header">
+                                <span><i class="fa-solid fa-clock-rotate-left"></i> Baseline Observation (T1)</span>
+                                <strong id="lbl-side-t1-date" style="color:#2563eb;">2025-01-10</strong>
+                            </div>
+                            <div class="side-img-box">
+                                <img id="img-side-before" src="" alt="Baseline Acquisition" />
+                                <div class="side-img-stamp">PRE-CHANGE BASELINE</div>
+                            </div>
+                        </div>
+                        <div class="side-card">
+                            <div class="side-card-header">
+                                <span><i class="fa-solid fa-satellite"></i> Target Observation (T2)</span>
+                                <strong id="lbl-side-t2-date" style="color:#dc2626;">2025-11-25</strong>
+                            </div>
+                            <div class="side-img-box">
+                                <img id="img-side-after" src="" alt="Target Acquisition" />
+                                <div class="side-img-stamp stamp-alert">DETECTED CHANGE (T*)</div>
+                            </div>
                         </div>
                     </div>
 
@@ -339,17 +364,42 @@
         <!-- VIEW 3: DISCOVERY & EMBEDDING CLUSTERING -->
         <section id="discovery-view" class="view-panel">
             <div class="discovery-grid">
-                <!-- Left 2D UMAP Semantic Scatter -->
+                <!-- Left Main Panel: Visual Cluster Satellite Footprints Grid & 2D Embedding Projection -->
                 <div class="cluster-canvas-card">
-                    <div class="card-header flex-between">
-                        <h3><i class="fa-solid fa-chart-pie"></i> 2D Latent Semantic Embedding Space (UMAP/PCA)</h3>
-                        <div class="cluster-legend-pills" id="cluster-legend-list">
-                            <!-- Dynamic cluster badges -->
+                    <div class="card-header flex-between cluster-header-main">
+                        <div class="cluster-title-group">
+                            <h3 id="cluster-section-title"><i class="fa-solid fa-shapes"></i> <span id="cluster-active-heading">Cluster Satellite Archive Footprints</span></h3>
+                            <span class="badge badge-info" id="cluster-tile-count-badge">68 Indexed Sites</span>
+                        </div>
+                        <div class="cluster-view-toggles">
+                            <button class="btn btn-sm btn-primary" id="btn-view-mode-grid" title="Visual Satellite Tiles Grid">
+                                <i class="fa-solid fa-grip"></i> Tile Grid
+                            </button>
+                            <button class="btn btn-sm btn-outline" id="btn-view-mode-scatter" title="2D Latent Semantic Embedding Space (UMAP/PCA)">
+                                <i class="fa-solid fa-chart-pie"></i> 2D Scatter
+                            </button>
                         </div>
                     </div>
-                    <div class="card-body relative-box">
-                        <canvas id="cluster-scatter-canvas" class="scatter-canvas"></canvas>
-                        <div id="scatter-tooltip" class="scatter-tooltip" style="display:none;"></div>
+                    
+                    <!-- Cluster Categories Filter Bar -->
+                    <div class="cluster-category-bar">
+                        <div class="cluster-legend-pills" id="cluster-legend-list">
+                            <!-- Dynamic clickable cluster badges -->
+                        </div>
+                    </div>
+
+                    <!-- Main Content Area: Tile Grid Gallery & 2D Canvas -->
+                    <div class="card-body relative-box cluster-main-content">
+                        <!-- 1. Interactive Satellite Tile Grid (Default) -->
+                        <div id="cluster-tiles-gallery" class="cluster-tiles-gallery">
+                            <!-- Populated with satellite tile cards -->
+                        </div>
+
+                        <!-- 2. 2D Scatter Canvas (Toggleable) -->
+                        <div id="cluster-scatter-wrapper" class="cluster-scatter-wrapper" style="display:none;">
+                            <canvas id="cluster-scatter-canvas" class="scatter-canvas"></canvas>
+                            <div id="scatter-tooltip" class="scatter-tooltip" style="display:none;"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -360,7 +410,7 @@
                     </div>
                     <div class="card-body">
                         <div class="form-group">
-                            <p class="helper-text">Click any point in the 2D embedding space or select an exemplar below to discover all identical facilities/patterns across the AOI without manual queries.</p>
+                            <p class="helper-text">Select any cluster category or exemplar below to instantly filter all matching regional satellite footprints and inspect them on the map.</p>
                         </div>
                         <div class="exemplars-grid" id="cluster-exemplars-list">
                             <!-- Populated dynamically -->
@@ -443,6 +493,45 @@
         <!-- VIEW 5: INGESTION & SYSTEM TELEMETRY -->
         <section id="system-view" class="view-panel">
             <div class="system-dashboard-grid">
+                <!-- Operational Workflow Banner for ISRO / DRDO / Defense Intelligence -->
+                <div class="workflow-banner-card" style="grid-column: span 2;">
+                    <div class="workflow-banner-title">
+                        <span><i class="fa-solid fa-satellite-dish"></i> SOVEREIGN AIR-GAPPED SATELLITE INGESTION &amp; INTELLIGENCE PIPELINE</span>
+                        <span class="tag-good">100% On-Premises | Zero Cloud API</span>
+                    </div>
+                    <div class="workflow-steps-flex">
+                        <div class="wf-step">
+                            <i class="fa-solid fa-satellite wf-icon" style="color:#2563eb;"></i>
+                            <strong>1. Raw Satellite Pass</strong>
+                            <span>4-Band GeoTIFF / COG (ISRO/Sentinel)</span>
+                        </div>
+                        <div class="wf-arrow">➔</div>
+                        <div class="wf-step">
+                            <i class="fa-solid fa-scissors wf-icon" style="color:#7c3aed;"></i>
+                            <strong>2. Geospatial Slicing &amp; QA</strong>
+                            <span>Affine Grid + Cloud/Shadow Mask</span>
+                        </div>
+                        <div class="wf-arrow">➔</div>
+                        <div class="wf-step">
+                            <i class="fa-solid fa-brain wf-icon" style="color:#0284c7;"></i>
+                            <strong>3. 512-dim AI Embedding</strong>
+                            <span>Vision-Language Dual Encoder</span>
+                        </div>
+                        <div class="wf-arrow">➔</div>
+                        <div class="wf-step">
+                            <i class="fa-solid fa-bolt wf-icon" style="color:#16a34a;"></i>
+                            <strong>4. Dynamic FAISS Ingest</strong>
+                            <span>~30 tiles/sec (Zero Downtime)</span>
+                        </div>
+                        <div class="wf-arrow">➔</div>
+                        <div class="wf-step">
+                            <i class="fa-solid fa-shield-halved wf-icon" style="color:#d97706;"></i>
+                            <strong>5. Strategic Actionable Alert</strong>
+                            <span>Immediate Defense/Rescue Triage</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Telemetry Metrics Cards -->
                 <div class="telemetry-cards-row">
                     <div class="metric-card">

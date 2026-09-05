@@ -11,55 +11,69 @@ class GeoSentinelApp {
         this.clusterExplorer = null;
         this.reviewQueue = null;
         this.systemMonitor = null;
-        this.init();
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.init());
+        } else {
+            this.init();
+        }
     }
 
     init() {
-        document.addEventListener('DOMContentLoaded', () => {
-            this.setupNavigation();
-            this.setupReportModal();
+        this.setupNavigation();
+        this.setupReportModal();
 
-            // Initialize child components
-            this.mapView = new TacticalMapView();
-            this.searchPanel = new SearchPanel(this.mapView);
-            this.swipeInspector = new SwipeInspector();
-            this.clusterExplorer = new ClusterExplorer();
-            this.reviewQueue = new ReviewQueue();
-            this.systemMonitor = new SystemMonitor();
+        // Initialize child components
+        this.mapView = new TacticalMapView();
+        this.searchPanel = new SearchPanel(this.mapView);
+        this.swipeInspector = new SwipeInspector();
+        this.clusterExplorer = new ClusterExplorer();
+        this.reviewQueue = new ReviewQueue();
+        this.systemMonitor = new SystemMonitor();
 
-            console.log('[GeoSentinelApp] Fully initialized sovereign intelligence workstation.');
-        });
+        console.log('[GeoSentinelApp] Fully initialized sovereign intelligence workstation.');
     }
 
     setupNavigation() {
         const tabs = document.querySelectorAll('.tactical-nav .nav-tab');
-        const views = document.querySelectorAll('.main-content .view-panel');
-
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                const targetViewId = tab.dataset.tab;
-
-                tabs.forEach(t => t.classList.remove('active'));
-                views.forEach(v => v.classList.remove('active'));
-
-                tab.classList.add('active');
-                const targetView = document.getElementById(targetViewId);
-                if (targetView) targetView.classList.add('active');
-
-                // Trigger map / canvas resize when switching views
-                if (targetViewId === 'search-view' && this.mapView && this.mapView.map) {
-                    setTimeout(() => this.mapView.map.invalidateSize(), 200);
-                } else if (targetViewId === 'discovery-view' && this.clusterExplorer) {
-                    setTimeout(() => this.clusterExplorer.drawScatter(), 200);
-                }
+                this.switchTab(tab.dataset.tab);
             });
         });
     }
 
+    switchTab(tabId) {
+        const tabs = document.querySelectorAll('.tactical-nav .nav-tab');
+        const views = document.querySelectorAll('.main-content .view-panel');
+
+        tabs.forEach(tab => {
+            if (tab.dataset.tab === tabId) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        views.forEach(view => {
+            if (view.id === tabId) {
+                view.classList.add('active');
+            } else {
+                view.classList.remove('active');
+            }
+        });
+
+        // Trigger map / canvas resize when switching views
+        if (tabId === 'search-view' && this.mapView && this.mapView.map) {
+            setTimeout(() => this.mapView.map.invalidateSize(), 150);
+        } else if (tabId === 'discovery-view' && this.clusterExplorer) {
+            setTimeout(() => this.clusterExplorer.drawScatter(), 150);
+        }
+    }
+
     inspectTile(tileId) {
         // Switch to swipe view and load corresponding scenario
-        const swipeTab = document.querySelector('[data-tab="swipe-view"]');
-        if (swipeTab) swipeTab.click();
+        this.switchTab('swipe-view');
 
         // Extract scenario prefix from tile ID
         const parts = tileId.split('_tile_');
@@ -73,9 +87,67 @@ class GeoSentinelApp {
         const scenarioSelect = document.getElementById('scenario-selector');
         if (scenarioSelect) {
             scenarioSelect.value = scenarioPrefix;
-            this.swipeInspector.currentScenario = scenarioPrefix;
-            this.swipeInspector.loadScenarioOptions();
+            if (this.swipeInspector) {
+                this.swipeInspector.currentScenario = scenarioPrefix;
+                this.swipeInspector.loadScenarioOptions();
+            }
         }
+    }
+
+    navigateToMapAndHighlight(tile) {
+        if (!tile) return;
+
+        // 1. Switch to Semantic Retrieval (search-view) tab
+        this.switchTab('search-view');
+
+        // 2. Refresh map layout and highlight tile
+        setTimeout(() => {
+            if (this.mapView && this.mapView.map) {
+                this.mapView.map.invalidateSize();
+                this.mapView.highlightTile(tile);
+            }
+
+            // 3. Populate inspected tile card in right results panel
+            const resultsContainer = document.getElementById('search-results-list');
+            const badgeCount = document.getElementById('results-count-badge');
+            if (badgeCount) badgeCount.textContent = `1 inspected site`;
+
+            if (resultsContainer) {
+                let categoryTag = "Urban Construction & Riverfront";
+                let tagColor = "#2563eb";
+                if (tile.tile_id && tile.tile_id.includes("forest")) { categoryTag = "🌲 Forest Canopy / Woodland"; tagColor = "#16a34a"; }
+                else if (tile.tile_id && tile.tile_id.includes("water")) { categoryTag = "🌊 Water Bodies & Inundation"; tagColor = "#0284c7"; }
+                else if (tile.tile_id && tile.tile_id.includes("airfield")) { categoryTag = "✈️ Airfield Runway & Logistics"; tagColor = "#7c3aed"; }
+
+                const imgPath = tile.preview_path || tile.rgb_preview_path;
+
+                resultsContainer.innerHTML = `
+                    <div class="result-card-item active" style="border: 2px solid #2563eb; background: #eff6ff;">
+                        ${imgPath ? `<img src="${imgPath}" alt="Tile Preview" class="result-thumb" />` : ''}
+                        <div class="result-info">
+                            <div class="result-title-row">
+                                <strong>⭐ ${tile.tile_id}</strong>
+                            </div>
+                            <div style="font-size:11px; font-weight:700; color:${tagColor}; margin:2px 0;">
+                                ${categoryTag}
+                            </div>
+                            <div class="result-meta-list">
+                                <span><i class="fa-solid fa-calendar"></i> ${tile.acquisition_date || '2025-02-10'} | ${tile.sensor_name || 'Sentinel-2 MSI'}</span>
+                                <span><i class="fa-solid fa-location-dot"></i> ${(tile.center_lat || 28.6139).toFixed(4)}, ${(tile.center_lon || 77.2090).toFixed(4)}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+                                <span class="match-score-badge" style="background:#dbeafe; color:#1d4ed8;">
+                                    <i class="fa-solid fa-crosshairs"></i> AOI Highlight Active
+                                </span>
+                                <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); window.app.inspectTile('${tile.tile_id}')" style="font-size:10px; padding:3px 8px;">
+                                    <i class="fa-solid fa-code-compare"></i> Inspect in Swipe
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }, 120);
     }
 
     setupReportModal() {

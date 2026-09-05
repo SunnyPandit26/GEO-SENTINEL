@@ -184,33 +184,64 @@ class SearchPanel {
         resultsContainer.innerHTML = '';
 
         data.results.forEach((item, idx) => {
+            let categoryTag = "Urban Construction & Riverfront";
+            let tagColor = "#2563eb";
+            if (item.tile_id.includes("forest")) { categoryTag = "🌲 Forest Clearance / Deforestation"; tagColor = "#16a34a"; }
+            else if (item.tile_id.includes("water")) { categoryTag = "🌊 Flood Inundation & Reservoir"; tagColor = "#0284c7"; }
+            else if (item.tile_id.includes("airfield")) { categoryTag = "✈️ Airfield Runway & Logistics"; tagColor = "#7c3aed"; }
+
             const card = document.createElement('div');
-            card.className = 'result-card';
+            card.className = 'result-card-item';
             card.innerHTML = `
                 <img src="${item.rgb_preview_path}" alt="Tile Preview" class="result-thumb" />
                 <div class="result-info">
-                    <h4>#${idx + 1} ${item.tile_id}</h4>
-                    <div class="result-meta">
-                        <span><i class="fa-solid fa-calendar"></i> ${item.acquisition_date}</span>
-                        <span><i class="fa-solid fa-satellite"></i> ${item.sensor_name}</span>
+                    <div class="result-title-row">
+                        <strong>#${idx + 1} ${item.tile_id}</strong>
+                    </div>
+                    <div style="font-size:11px; font-weight:700; color:${tagColor}; margin:2px 0;">
+                        ${categoryTag}
+                    </div>
+                    <div class="result-meta-list">
+                        <span><i class="fa-solid fa-calendar"></i> ${item.acquisition_date} | ${item.sensor_name}</span>
                         <span><i class="fa-solid fa-location-dot"></i> ${item.center_lat.toFixed(3)}, ${item.center_lon.toFixed(3)}</span>
                     </div>
-                    <div class="score-badge">
-                        <i class="fa-solid fa-chart-simple"></i> Match: ${(item.composite_score * 100).toFixed(1)}%
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:6px;">
+                        <span class="match-score-badge">
+                            <i class="fa-solid fa-bolt"></i> Match: ${(item.composite_score * 100).toFixed(1)}%
+                        </span>
+                        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation(); window.app.inspectTile('${item.tile_id}')" style="font-size:10px; padding:3px 8px;">
+                            <i class="fa-solid fa-code-compare"></i> Inspect
+                        </button>
                     </div>
                 </div>
             `;
 
             card.addEventListener('click', () => {
+                document.querySelectorAll('.result-card-item').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
                 this.mapView.highlightTile(item);
             });
 
             resultsContainer.appendChild(card);
         });
 
-        // Highlight top match on map
+        // Highlight top match on map and prepare scenario in swipe view
         if (data.results.length > 0) {
-            this.mapView.highlightTile(data.results[0]);
+            const top = data.results[0];
+            this.mapView.highlightTile(top);
+            
+            // Sync scenario to swipe inspector
+            let scenarioPrefix = "scene_urban_river";
+            if (top.tile_id.includes("forest")) scenarioPrefix = "scene_forest_clearance";
+            else if (top.tile_id.includes("water")) scenarioPrefix = "scene_water_inundation";
+            else if (top.tile_id.includes("airfield")) scenarioPrefix = "scene_airfield_transport";
+
+            const scenarioSelect = document.getElementById('scenario-selector');
+            if (scenarioSelect && window.app && window.app.swipeInspector) {
+                scenarioSelect.value = scenarioPrefix;
+                window.app.swipeInspector.currentScenario = scenarioPrefix;
+                window.app.swipeInspector.loadScenarioOptions();
+            }
         }
     }
 }
